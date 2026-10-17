@@ -3,47 +3,77 @@ import SwiftUI
 struct ContentView: View {
     @State private var blueScore = 0
     @State private var redScore = 0
-    @State private var blueOnLeft = true
+    /// Whether blue is on the left (sideways) or top (upright).
+    @State private var blueFirst = true
 
     var body: some View {
-        ZStack(alignment: .top) {
-            HStack(spacing: 0) {
-                if blueOnLeft {
-                    ScoreSide(score: $blueScore, color: .blue)
-                    ScoreSide(score: $redScore, color: .red)
-                } else {
-                    ScoreSide(score: $redScore, color: .red)
-                    ScoreSide(score: $blueScore, color: .blue)
+        GeometryReader { geo in
+            // Sideways: side by side with the menu tab on the top edge.
+            // Upright: one above the other with the tab on the left edge.
+            let upright = geo.size.height > geo.size.width
+            ZStack(alignment: upright ? .leading : .top) {
+                let layout = upright ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
+                layout {
+                    ForEach(blueFirst ? [Team.blue, .red] : [.red, .blue], id: \.self) { team in
+                        ScoreSide(score: team == .blue ? $blueScore : $redScore, color: team.color)
+                    }
                 }
-            }
-            .ignoresSafeArea()
+                .ignoresSafeArea()
 
-            Menu {
-                Button {
-                    blueScore = 0
-                    redScore = 0
-                } label: {
-                    Label("Reset", systemImage: "arrow.counterclockwise")
-                }
-                Button {
-                    withAnimation { blueOnLeft.toggle() }
-                } label: {
-                    Label("Switch", systemImage: "arrow.left.arrow.right")
-                }
+                menu(upright: upright)
+                    // Line the upright tab up with the dividing line, which sits at the full screen's middle.
+                    .offset(y: upright ? (geo.safeAreaInsets.bottom - geo.safeAreaInsets.top) / 2 : 0)
+            }
+            // Swap layouts instantly on rotation so the whole screen turns as one,
+            // instead of each half and the tab sliding separately to their new spots.
+            .transaction(value: upright) { $0.animation = nil }
+        }
+    }
+
+    private func menu(upright: Bool) -> some View {
+        Menu {
+            Button {
+                blueScore = 0
+                redScore = 0
             } label: {
-                Image(systemName: "line.3.horizontal")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 64, height: 36)
+                Label("Reset", systemImage: "arrow.counterclockwise")
             }
-            .background {
-                // A tab hanging from the top edge: rounded at the bottom, square where it meets the screen edge.
-                // Dark frosted glass so the white lines stand out.
-                UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .environment(\.colorScheme, .dark)
-                    .ignoresSafeArea(edges: .top)
+            Button {
+                withAnimation { blueFirst.toggle() }
+            } label: {
+                Label("Switch", systemImage: "arrow.left.arrow.right")
             }
+        } label: {
+            Image(systemName: "line.3.horizontal")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.white)
+                .frame(width: upright ? 36 : 64, height: upright ? 64 : 36)
+        }
+        .background {
+            // A tab attached to the screen edge: rounded on the inner side, square where it meets the edge.
+            // Dark frosted glass so the white lines stand out.
+            Group {
+                if upright {
+                    UnevenRoundedRectangle(bottomTrailingRadius: 12, topTrailingRadius: 12)
+                        .ignoresSafeArea(edges: .leading)
+                } else {
+                    UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12)
+                        .ignoresSafeArea(edges: .top)
+                }
+            }
+            .foregroundStyle(.ultraThinMaterial)
+            .environment(\.colorScheme, .dark)
+        }
+    }
+}
+
+enum Team {
+    case blue, red
+
+    var color: Color {
+        switch self {
+        case .blue: .blue
+        case .red: .red
         }
     }
 }
