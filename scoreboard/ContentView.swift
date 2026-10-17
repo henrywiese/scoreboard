@@ -6,7 +6,7 @@ struct ContentView: View {
     @State private var blueOnLeft = true
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack(alignment: .top) {
             HStack(spacing: 0) {
                 if blueOnLeft {
                     ScoreSide(score: $blueScore, color: .blue)
@@ -33,11 +33,17 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "line.3.horizontal")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(.black.opacity(0.25), in: Circle())
+                    .foregroundStyle(Color.white)
+                    .frame(width: 64, height: 36)
             }
-            .padding(.bottom, 8)
+            .background {
+                // A tab hanging from the top edge: rounded at the bottom, square where it meets the screen edge.
+                // Dark frosted glass so the white lines stand out.
+                UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12)
+                    .fill(.ultraThinMaterial)
+                    .environment(\.colorScheme, .dark)
+                    .ignoresSafeArea(edges: .top)
+            }
         }
     }
 }
