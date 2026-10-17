@@ -3,13 +3,42 @@ import SwiftUI
 struct ContentView: View {
     @State private var blueScore = 0
     @State private var redScore = 0
+    @State private var blueOnLeft = true
 
     var body: some View {
-        HStack(spacing: 0) {
-            ScoreSide(score: $blueScore, color: .blue)
-            ScoreSide(score: $redScore, color: .red)
+        ZStack(alignment: .bottom) {
+            HStack(spacing: 0) {
+                if blueOnLeft {
+                    ScoreSide(score: $blueScore, color: .blue)
+                    ScoreSide(score: $redScore, color: .red)
+                } else {
+                    ScoreSide(score: $redScore, color: .red)
+                    ScoreSide(score: $blueScore, color: .blue)
+                }
+            }
+            .ignoresSafeArea()
+
+            Menu {
+                Button {
+                    blueScore = 0
+                    redScore = 0
+                } label: {
+                    Label("Reset", systemImage: "arrow.counterclockwise")
+                }
+                Button {
+                    withAnimation { blueOnLeft.toggle() }
+                } label: {
+                    Label("Switch", systemImage: "arrow.left.arrow.right")
+                }
+            } label: {
+                Image(systemName: "line.3.horizontal")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(.black.opacity(0.25), in: Circle())
+            }
+            .padding(.bottom, 8)
         }
-        .ignoresSafeArea()
     }
 }
 
