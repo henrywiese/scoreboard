@@ -161,6 +161,10 @@ struct ScoreSide: View {
                     .padding()
             }
             .contentShape(Rectangle())
+            .sensoryFeedback(trigger: score) { old, new in
+                // Firm tap for a point, slightly softer for taking one away.
+                new > old ? .impact(weight: .medium, intensity: 1) : .impact(weight: .medium, intensity: 0.7)
+            }
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onEnded { value in
